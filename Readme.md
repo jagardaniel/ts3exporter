@@ -1,19 +1,23 @@
 # TS3 Exporter
+
 ![](https://github.com/hikhvar/ts3exporter/workflows/tests/badge.svg) ![](https://github.com/hikhvar/ts3exporter/workflows/release/badge.svg)
 
 This exporter uses the server query protocol to provide prometheus metrics.
 
 The `contrib` directory contains a grafana dashboard and an ansible role to install
-the exporter. 
+the exporter.
 
 ## Build
+
 The build is tested with go version 1.14. Since the build uses new standard error formatting, it requires at least 1.13.
+
 ```bash
 go build
 ```
 
 ## Usage
-``` 
+
+```
 # ./ts3exporter -h
 Usage of /ts3exporter:
   -enablechannelmetrics
@@ -31,25 +35,30 @@ Usage of /ts3exporter:
 ```
 
 ## Channel Metrics
-The exporter can produce per channel metrics. The channel metrics are disabled by default, since the channel metrics produce a high number of 
+
+The exporter can produce per channel metrics. The channel metrics are disabled by default, since the channel metrics produce a high number of
 server query commands. The current formular is `(2 + NumberOfChannels) * NumberOfVServer` server query commands. The default server
-query flood limit is 10 commands per 3 seconds. To not run into that limit, the exporter reads the limit at login time and 
+query flood limit is 10 commands per 3 seconds. To not run into that limit, the exporter reads the limit at login time and
 throttles itself below that. The default results in one server query command every 300ms.
 Using the default flood limit and a vServer with 10 channels we get the following scrape time:
+
 ```text
 (2 * 10)*1 * 300ms = 6s
 ```
-The `serverinfo` metrics collector produces `1 + NumberOfVServer*2` 
+
+The `serverinfo` metrics collector produces `1 + NumberOfVServer*2`
 serverquery commands. In our example that adds additional 900ms.
 Since we update the metrics if the prometheus server calls the `/metrics`
-endpoint, the scrape timeout must be at least 7 seconds. 
+endpoint, the scrape timeout must be at least 7 seconds.
 
 ### Workarounds
+
 To speed up the scraping you can increase the server query flood limits or add the IP of your exporter to the
-`query_ip_whitelist.txt` file. If your exporter IP is added to the whitelist file, set the option `-ignorefloodlimits` to 
+`query_ip_whitelist.txt` file. If your exporter IP is added to the whitelist file, set the option `-ignorefloodlimits` to
 disable the limiter.
 
 ## Examples:
+
 ```bash
 # curl localhost:9189/metrics
 # HELP go_gc_duration_seconds A summary of the pause duration of garbage collection cycles.
@@ -330,6 +339,18 @@ ts3_serverinfo_speech_bytes_sent_total{virtualserver="Gute Stube"} 1.09505883e+0
 # HELP ts3_serverinfo_uptime uptime of the virtual server
 # TYPE ts3_serverinfo_uptime counter
 ts3_serverinfo_uptime{virtualserver="Gute Stube"} 1.584554e+06
+# HELP ts3_serverinfo_total_packetloss_control average packet loss for control data
+# TYPE ts3_serverinfo_total_packetloss_control gauge
+ts3_serverinfo_total_packetloss_control{virtualserver="Gute Stube"} 0
+# HELP ts3_serverinfo_total_packetloss_keepalive average packet loss for keepalive data
+# TYPE ts3_serverinfo_total_packetloss_keepalive gauge
+ts3_serverinfo_total_packetloss_keepalive{virtualserver="Gute Stube"} 0.0144
+# HELP ts3_serverinfo_total_packetloss_speech average packet loss for speech data
+# TYPE ts3_serverinfo_total_packetloss_speech gauge
+ts3_serverinfo_total_packetloss_speech{virtualserver="Gute Stube"} 0
+# HELP ts3_serverinfo_total_packetloss_total average packet loss for all data
+# TYPE ts3_serverinfo_total_packetloss_total gauge
+ts3_serverinfo_total_packetloss_total{virtualserver="Gute Stube"} 0.0139
 ```
 
 Dashboard:
